@@ -16,15 +16,6 @@ This repository documents the architecture, mathematical formulations, and softw
 By treating the **MetaTrader 5 (MT5)** client strictly as an ultra-reliable broker gateway and liquidity provider interface, the execution engine decouples algorithmic computation and AI inference into a standalone Python runtime.
 
 
-┌─────────────────────────────────┐       IPC / Win32       ┌────────────────────────────────┐
-│   Python Strategy & AI Core     │ ◄─────────────────────► │     MetaTrader 5 Terminal      │
-│  - Indicator Pipeline (Pandas)  │    Tick / Bar Data      │  - Order Execution Engine      │
-│  - AI Sentiment / LLM Agents    │                         │  - Broker Liquidity Gateway    │
-│  - Dynamic Risk Guardian        │   Trade Requests / Deals│  - Real-Time Position Monitor  │
-└─────────────────────────────────┘                         └────────────────────────────────┘
-
-
-
 ## 🚀 Key Modules Built
 
 - **Native Terminal Bridge**: High-throughput communication layer linking Python's runtime directly to the MT5 desktop client over Windows IPC hooks.
