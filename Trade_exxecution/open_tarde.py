@@ -31,7 +31,6 @@ def get_user_configuration():
     print("Invalid asset choice. Exiting...")
     exit()
 
-  # Volume must accept decimals (e.g., 0.01)
   volume = float(input(f"Enter volume for {symbol} (minimum 0.01): "))
 
   print("Order Action: [1] BUY | [0] SELL")
@@ -56,6 +55,23 @@ def get_user_configuration():
       "stop_loss": stop_loss,
       "take_profit": take_profit,
   }
+
+
+# --------------------- DETECT BROKER FILLING MODE ---------------------#
+def get_filling_mode(symbol: str) -> int:
+  """Detects which filling mode is supported by checking bitmask flags."""
+  info = mt5.symbol_info(symbol)
+  if info is None:
+    return mt5.ORDER_FILLING_RETURN
+
+  modes = info.filling_mode
+  # modes bitmask: 1 = FOK, 2 = IOC
+  if modes & 1:
+    return mt5.ORDER_FILLING_FOK
+  elif modes & 2:
+    return mt5.ORDER_FILLING_IOC
+  else:
+    return mt5.ORDER_FILLING_RETURN
 
 
 # Load configuration
@@ -102,7 +118,9 @@ def loop() -> bool:
     sl = price_info.ask + STOP_LOSS
     tp = price_info.ask - TAKE_PROFIT
 
-  # Build MT5 order request dictionary
+  # Query the broker's supported filling policy dynamically
+  filling_type = get_filling_mode(SYMBOL)
+
   request = {
       "action": mt5.TRADE_ACTION_DEAL,
       "symbol": SYMBOL,
@@ -115,20 +133,19 @@ def loop() -> bool:
       "magic": MAGIC,
       "comment": "Python Trade Dispatcher",
       "type_time": mt5.ORDER_TIME_GTC,
-      "type_filling": mt5.ORDER_FILLING_IOC,
+      "type_filling": filling_type,
   }
 
-  print(f"Sending order request: {request}")
+  print(f"Sending order request (filling: {filling_type}):\n{request}")
   result = mt5.order_send(request)
 
-  # Check execution status
   if result.retcode != mt5.TRADE_RETCODE_DONE:
     print(f"Order failed! Return code: {result.retcode}")
     print(f"Full broker response: {result}")
     return False
 
   print(f"SUCCESS! Trade placed successfully: {result}")
-  return False  # Single execution complete, terminate loop
+  return False
 
 
 # --------------------- CLEANUP ---------------------#
@@ -154,4 +171,3 @@ def main():
 
 if __name__ == "__main__":
   main()
-  
